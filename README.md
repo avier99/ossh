@@ -1,22 +1,22 @@
-# ossh — SSH config and key management, the secure way, by default.
+# ossh
 
-ossh is a terminal UI for managing SSH hosts and keys. Single binary. No account. No cloud. No passwords stored — ever.
+SSH config and key management, the secure way, by default.
 
 ---
 
 ## Why
 
-Most people use SSH passwords because setting up key auth is a multi-step process with room to get it wrong. ossh makes the secure path the easy path — generating keys with the right settings, copying them to servers correctly, and keeping your `~/.ssh/config` clean and backed up.
+Most people use SSH passwords because setting up key auth is too many steps with too much room to get wrong. ossh makes the secure path the easy path. It handles key generation, copies keys to servers correctly, and keeps your `~/.ssh/config` clean and backed up.
 
 ---
 
 ## What it does
 
-- **Connect** — fuzzy-search your hosts and launch a session
+- **Connect** — fuzzy search your hosts and launch a session
 - **Add host** — key auth by default, password auth available with a clear warning
 - **Generate key** — ed25519, passphrase prompted, correct permissions, named cleanly
-- **Copy key to server** — `ssh-copy-id` with a manual fallback
-- **First-run setup** — creates `~/.ssh/` if missing, audits permissions and reports issues
+- **Copy key to server** — tries `ssh-copy-id` first, falls back to manual instructions
+- **First-run setup** — creates `~/.ssh/` if missing and audits permissions
 
 ---
 
@@ -25,7 +25,7 @@ Most people use SSH passwords because setting up key auth is a multi-step proces
 - Store passwords
 - Sync to a cloud or require an account
 - Touch anything outside `~/.ssh/`
-- Replace `ssh` — it wraps native SSH end-to-end. Delete ossh tomorrow and everything it created still works with plain `ssh`.
+- Replace `ssh`. It wraps native SSH end-to-end. Delete ossh tomorrow and everything it created still works with plain `ssh`.
 
 ---
 
