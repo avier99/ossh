@@ -10,7 +10,7 @@ import (
 )
 
 func TestHome_EmptyConfig(t *testing.T) {
-	h := NewHome(nil, nil)
+	h := NewHome(nil, nil, t.TempDir())
 	view := h.View()
 
 	if !strings.Contains(view, "No hosts configured yet") {
@@ -29,7 +29,7 @@ Host personal
     User user
 `)
 
-	h := NewHome(cfg, nil)
+	h := NewHome(cfg, nil, t.TempDir())
 	view := h.View()
 
 	if !strings.Contains(view, "work-vpn") {
@@ -51,7 +51,7 @@ Host personal
     User user
 `)
 
-	h := NewHome(cfg, nil)
+	h := NewHome(cfg, nil, t.TempDir())
 
 	// Type "work"
 	for _, r := range "work" {
@@ -75,7 +75,7 @@ Host host2
 Host host3
 `)
 
-	h := NewHome(cfg, nil)
+	h := NewHome(cfg, nil, t.TempDir())
 
 	// Initial cursor is 0
 	if h.cursor != 0 {
@@ -131,7 +131,7 @@ Host target
     HostName example.com
 `)
 
-	h := NewHome(cfg, nil)
+	h := NewHome(cfg, nil, t.TempDir())
 
 	// Press enter
 	_, cmd := h.Update(tea.KeyMsg{Type: tea.KeyEnter})
@@ -157,7 +157,7 @@ Host host1
 Host host2
 `)
 
-	h := NewHome(cfg, nil)
+	h := NewHome(cfg, nil, t.TempDir())
 
 	// Type a query
 	screen, _ := h.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'h'}})
@@ -185,7 +185,7 @@ func TestHome_EscQuitsWhenQueryEmpty(t *testing.T) {
 Host host1
 `)
 
-	h := NewHome(cfg, nil)
+	h := NewHome(cfg, nil, t.TempDir())
 
 	// Press Esc with empty query (should quit)
 	_, cmd := h.Update(tea.KeyMsg{Type: tea.KeyEsc})

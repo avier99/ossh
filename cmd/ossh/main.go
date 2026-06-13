@@ -56,7 +56,7 @@ func run() error {
 	}
 
 	// Create initial home screen
-	homeScreen := screens.NewHome(cfg, findings)
+	homeScreen := screens.NewHome(cfg, findings, sshDir)
 
 	// Start TUI
 	return tui.Start(homeScreen, cfg, findings)

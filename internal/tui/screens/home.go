@@ -26,6 +26,9 @@ type Home struct {
 	matches      []fuzzy.Match
 	cursor       int
 	findingCount int
+	sshDir       string
+	cfg          *ssh_config.Config
+	findings     []config.Finding
 }
 
 var (
@@ -38,15 +41,18 @@ var (
 )
 
 // NewHome creates a new home screen from the SSH config and audit findings
-func NewHome(cfg *ssh_config.Config, findings []config.Finding) *Home {
+func NewHome(cfg *ssh_config.Config, findings []config.Finding, sshDir string) *Home {
 	hosts := extractHosts(cfg)
-	
+
 	return &Home{
 		hosts:        hosts,
 		query:        "",
 		matches:      nil, // nil means show all
 		cursor:       0,
 		findingCount: len(findings),
+		sshDir:       sshDir,
+		cfg:          cfg,
+		findings:     findings,
 	}
 }
 
@@ -136,6 +142,16 @@ func (h *Home) handleKey(msg tea.KeyMsg) (tui.Screen, tea.Cmd) {
 		if h.cursor < maxIdx {
 			h.cursor++
 		}
+		return h, nil
+
+	case "g":
+		if h.query == "" {
+			return h, func() tea.Msg {
+				return tui.SwitchScreenMsg{Next: NewGenKey(h.sshDir, h.cfg, h.findings)}
+			}
+		}
+		h.query += "g"
+		h.runFuzzy()
 		return h, nil
 
 	case "backspace":
