@@ -29,6 +29,25 @@ Most people use SSH passwords because setting up key auth is too many steps with
 
 ---
 
+## Dev
+
+**Build:**
+```
+go build -o ossh ./cmd/ossh/
+```
+
+**Test:**
+```
+go test ./...
+```
+
+**Run:**
+```
+go run ./cmd/ossh/
+```
+
+---
+
 ## A note on the name
 
 A few small projects share the name `ossh`. ossh by Synoxis is the security-first one.

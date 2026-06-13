@@ -1,0 +1,36 @@
+# Personal machines
+Host home
+    HostName 192.168.1.100
+    User gana
+    IdentityFile ~/.ssh/id_ed25519
+    Port 22
+
+# Work stuff
+Host work-vpn
+      HostName vpn.company.com
+      User gana.work
+      Port 2222
+      IdentityFile ~/.ssh/work_key
+
+# Jump host pattern
+Host bastion
+    HostName bastion.company.com
+    User ec2-user
+    IdentityFile ~/.ssh/id_ed25519
+
+Host internal-*
+    ProxyJump bastion
+    User ubuntu
+
+# Match block — unusual directive, ossh must never touch this
+Match host *.prod.company.com exec "test -f ~/.prod-mode"
+    IdentityFile ~/.ssh/prod_key
+    StrictHostKeyChecking yes
+
+# Include directive
+Include ~/.ssh/config.d/*.conf
+
+Host *
+    ServerAliveInterval 60
+    ServerAliveCountMax 3
+    AddKeysToAgent yes
