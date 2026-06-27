@@ -154,6 +154,16 @@ func (h *Home) handleKey(msg tea.KeyMsg) (tui.Screen, tea.Cmd) {
 		h.runFuzzy()
 		return h, nil
 
+	case "a":
+		if h.query == "" {
+			return h, func() tea.Msg {
+				return tui.SwitchScreenMsg{Next: NewAddHost(h.sshDir, h.cfg, h.findings)}
+			}
+		}
+		h.query += "a"
+		h.runFuzzy()
+		return h, nil
+
 	case "backspace":
 		if len(h.query) > 0 {
 			h.query = h.query[:len(h.query)-1]
@@ -255,7 +265,7 @@ func (h *Home) View() string {
 	}
 
 	// Help
-	b.WriteString(helpStyle.Render("  enter:connect  ↑↓:navigate  esc:clear/quit"))
+	b.WriteString(helpStyle.Render("  enter:connect  g:new key  a:add host  ↑↓:nav  esc:clear/quit"))
 
 	return b.String()
 }
