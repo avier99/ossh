@@ -19,17 +19,75 @@ func TestGenKey_InitRendersNameStep(t *testing.T) {
 	}
 }
 
-func TestGenKey_TypeNameAdvances(t *testing.T) {
+func TestGenKey_NameEnterAdvancesToFolder(t *testing.T) {
 	g := NewGenKey(t.TempDir(), nil, nil)
 	g.nameInput.SetValue("mykey")
+
+	screen, _ := g.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	g = screen.(*GenKey)
+	if g.step != stepFolder {
+		t.Errorf("expected stepFolder, got %d", g.step)
+	}
+	if g.name != "mykey" {
+		t.Errorf("expected name 'mykey', got %q", g.name)
+	}
+}
+
+func TestGenKey_FolderBlankSkipsToType(t *testing.T) {
+	g := NewGenKey(t.TempDir(), nil, nil)
+	g.step = stepFolder
+	g.name = "mykey"
 
 	screen, _ := g.Update(tea.KeyMsg{Type: tea.KeyEnter})
 	g = screen.(*GenKey)
 	if g.step != stepType {
 		t.Errorf("expected stepType, got %d", g.step)
 	}
-	if g.name != "mykey" {
-		t.Errorf("expected name 'mykey', got %q", g.name)
+	if g.subDir != "" {
+		t.Errorf("expected empty subDir, got %q", g.subDir)
+	}
+}
+
+func TestGenKey_FolderValueAdvancesToType(t *testing.T) {
+	g := NewGenKey(t.TempDir(), nil, nil)
+	g.step = stepFolder
+	g.name = "mykey"
+	g.folderInput.SetValue("homelab-keys")
+
+	screen, _ := g.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	g = screen.(*GenKey)
+	if g.step != stepType {
+		t.Errorf("expected stepType, got %d", g.step)
+	}
+	if g.subDir != "homelab-keys" {
+		t.Errorf("expected subDir 'homelab-keys', got %q", g.subDir)
+	}
+}
+
+func TestGenKey_FolderEscGoesBackToName(t *testing.T) {
+	g := NewGenKey(t.TempDir(), nil, nil)
+	g.step = stepFolder
+
+	screen, _ := g.Update(tea.KeyMsg{Type: tea.KeyEsc})
+	g = screen.(*GenKey)
+	if g.step != stepName {
+		t.Errorf("expected stepName, got %d", g.step)
+	}
+}
+
+func TestGenKey_FolderInvalidBlocked(t *testing.T) {
+	g := NewGenKey(t.TempDir(), nil, nil)
+	g.step = stepFolder
+	g.name = "mykey"
+	g.folderInput.SetValue("foo/bar")
+
+	screen, _ := g.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	g = screen.(*GenKey)
+	if g.step != stepFolder {
+		t.Errorf("expected to stay on stepFolder, got %d", g.step)
+	}
+	if g.folderErr == nil {
+		t.Error("expected folder validation error")
 	}
 }
 
@@ -100,8 +158,8 @@ func TestGenKey_TypeEscGoesBack(t *testing.T) {
 
 	screen, _ := g.Update(tea.KeyMsg{Type: tea.KeyEsc})
 	g = screen.(*GenKey)
-	if g.step != stepName {
-		t.Errorf("expected stepName, got %d", g.step)
+	if g.step != stepFolder {
+		t.Errorf("expected stepFolder, got %d", g.step)
 	}
 }
 

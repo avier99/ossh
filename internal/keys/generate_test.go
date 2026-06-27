@@ -72,6 +72,27 @@ func TestValidate_Valid(t *testing.T) {
 	}
 }
 
+func TestValidate_SubDirWithSlash(t *testing.T) {
+	err := Validate(GenerateOpts{SSHDir: t.TempDir(), SubDir: "foo/bar", Name: "mykey"})
+	if !errors.Is(err, ErrInvalidSubDir) {
+		t.Errorf("expected ErrInvalidSubDir, got %v", err)
+	}
+}
+
+func TestValidate_SubDirAbsolute(t *testing.T) {
+	err := Validate(GenerateOpts{SSHDir: t.TempDir(), SubDir: "/etc", Name: "mykey"})
+	if !errors.Is(err, ErrInvalidSubDir) {
+		t.Errorf("expected ErrInvalidSubDir, got %v", err)
+	}
+}
+
+func TestValidate_SubDirValid(t *testing.T) {
+	err := Validate(GenerateOpts{SSHDir: t.TempDir(), SubDir: "homelab-keys", Name: "mykey"})
+	if err != nil {
+		t.Errorf("expected nil, got %v", err)
+	}
+}
+
 func TestCommand_ED25519Args(t *testing.T) {
 	dir := t.TempDir()
 	cmd, err := Command(GenerateOpts{
@@ -135,6 +156,37 @@ func TestCommand_NoPassphraseFlag(t *testing.T) {
 		if arg == "-N" {
 			t.Errorf("-N flag must not be present in args: %v", cmd.Args[1:])
 		}
+	}
+}
+
+func TestCommand_SubDirKeyPath(t *testing.T) {
+	dir := t.TempDir()
+	cmd, err := Command(GenerateOpts{
+		SSHDir:  dir,
+		SubDir:  "homelab-keys",
+		Name:    "mykey",
+		KeyType: KeyTypeED25519,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	expectedPath := filepath.Join(dir, "homelab-keys", "mykey")
+	args := cmd.Args[1:]
+	if !containsArgPair(args, "-f", expectedPath) {
+		t.Errorf("expected -f %s in args, got %v", expectedPath, args)
+	}
+
+	subDirPath := filepath.Join(dir, "homelab-keys")
+	info, err := os.Stat(subDirPath)
+	if err != nil {
+		t.Fatalf("expected subdir to be created: %v", err)
+	}
+	if !info.IsDir() {
+		t.Errorf("expected %s to be a directory", subDirPath)
+	}
+	if info.Mode().Perm() != 0700 {
+		t.Errorf("expected subdir mode 0700, got %04o", info.Mode().Perm())
 	}
 }
 

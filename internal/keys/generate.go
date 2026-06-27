@@ -21,34 +21,64 @@ const (
 // GenerateOpts holds the inputs for key generation.
 type GenerateOpts struct {
 	SSHDir  string
+	SubDir  string // optional, e.g. "homelab-keys" — relative, one level only
 	Name    string
 	KeyType KeyType
 }
 
 var (
-	ErrEmptyName       = errors.New("key name cannot be empty")
-	ErrPathSeparator   = errors.New("key name cannot contain path separators")
-	ErrSpaceInName     = errors.New("key name cannot contain spaces")
-	ErrLeadingDot      = errors.New("key name cannot start with a dot")
+	ErrEmptyName         = errors.New("key name cannot be empty")
+	ErrPathSeparator     = errors.New("key name cannot contain path separators")
+	ErrSpaceInName       = errors.New("key name cannot contain spaces")
+	ErrLeadingDot        = errors.New("key name cannot start with a dot")
+	ErrInvalidSubDir     = errors.New("subfolder name cannot contain path separators or be absolute")
 	ErrSSHKeygenNotFound = errors.New("ssh-keygen not found on PATH")
 )
 
-// Validate checks that the key name is safe and target files do not already exist.
-func Validate(opts GenerateOpts) error {
-	if opts.Name == "" {
+func targetDir(opts GenerateOpts) string {
+	if opts.SubDir == "" {
+		return opts.SSHDir
+	}
+	return filepath.Join(opts.SSHDir, opts.SubDir)
+}
+
+// ValidateNameFormat checks only the key name format rules, not file collision.
+func ValidateNameFormat(name string) error {
+	if name == "" {
 		return ErrEmptyName
 	}
-	if strings.ContainsAny(opts.Name, `/\`) {
+	if strings.ContainsAny(name, `/\`) {
 		return ErrPathSeparator
 	}
-	if strings.Contains(opts.Name, " ") {
+	if strings.Contains(name, " ") {
 		return ErrSpaceInName
 	}
-	if strings.HasPrefix(opts.Name, ".") {
+	if strings.HasPrefix(name, ".") {
 		return ErrLeadingDot
 	}
+	return nil
+}
 
-	privatePath := filepath.Join(opts.SSHDir, opts.Name)
+// Validate checks that the key name is safe and target files do not already exist.
+func Validate(opts GenerateOpts) error {
+	if err := ValidateNameFormat(opts.Name); err != nil {
+		return err
+	}
+
+	if opts.SubDir != "" {
+		if strings.ContainsAny(opts.SubDir, `/\`) {
+			return ErrInvalidSubDir
+		}
+		if strings.HasPrefix(opts.SubDir, ".") {
+			return ErrInvalidSubDir
+		}
+		if filepath.IsAbs(opts.SubDir) {
+			return ErrInvalidSubDir
+		}
+	}
+
+	dir := targetDir(opts)
+	privatePath := filepath.Join(dir, opts.Name)
 	publicPath := privatePath + ".pub"
 
 	if _, err := os.Stat(privatePath); err == nil {
@@ -78,7 +108,12 @@ func Command(opts GenerateOpts) (*exec.Cmd, error) {
 		return nil, ErrSSHKeygenNotFound
 	}
 
-	keyPath := filepath.Join(opts.SSHDir, opts.Name)
+	dir := targetDir(opts)
+	if err := os.MkdirAll(dir, 0700); err != nil {
+		return nil, err
+	}
+
+	keyPath := filepath.Join(dir, opts.Name)
 
 	var args []string
 	switch opts.KeyType {
